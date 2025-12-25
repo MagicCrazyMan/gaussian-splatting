@@ -1,20 +1,17 @@
-name: gaussian_splatting
+name: gaussian_splatting_cuda_12
 channels:
   - pytorch
   - conda-forge
   - defaults
 dependencies:
-  - cudatoolkit=11.6
+  - cuda-toolkit=12.8.1
   - plyfile
-  - python=3.7.13
-  - pip=22.3.1
-  - pytorch=1.12.1
-  - torchaudio=0.12.1
-  - torchvision=0.13.1
+  - python=3.11.9
+  - pip=25.3
   - tqdm
   - pip:
-    - submodules/diff-gaussian-rasterization
-    - submodules/simple-knn
-    - submodules/fused-ssim
+    - torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128
+    - torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu128
+    - torchvision==0.24.1 --index-url https://download.pytorch.org/whl/cu128
     - opencv-python
     - joblib
