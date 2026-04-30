@@ -1,4 +1,4 @@
---index-url https://download.pytorch.org/whl/cu129
+--index-url https://download.pytorch.org/whl/cu128
 --extra-index-url https://pypi.org/simple
 
 # Recommended interpreter/tooling from environment.yml:
@@ -7,7 +7,7 @@
 
 # Install these non-PyPI dependencies separately before using this file:
 #   gcc/g++ 11
-#   CUDA Toolkit 12.9.1 (nvidia/cuda docker image already contains this)
+#   CUDA Toolkit 12.8.1 (nvidia/cuda docker image already contains this)
 
 torch==2.11.0
 torchaudio==2.11.0
