@@ -6,14 +6,14 @@ channels:
 dependencies:
   - gcc_linux-64=11
   - gxx_linux-64=11
-  - cuda-toolkit=12.8.1
+  - cuda-toolkit=12.9.1
   - plyfile
   - python=3.11.9
   - pip=25.3
   - tqdm
   - pip:
-    - torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128
-    - torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu128
-    - torchvision==0.24.1 --index-url https://download.pytorch.org/whl/cu128
+    - torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128
+    - torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu128
+    - torchvision==0.26.0 --index-url https://download.pytorch.org/whl/cu128
     - opencv-python
     - joblib

@@ -1,0 +1,18 @@
+--index-url https://download.pytorch.org/whl/cu129
+--extra-index-url https://pypi.org/simple
+
+# Recommended interpreter/tooling from environment.yml:
+#   Python ^3.11.9
+#   pip ^25.3
+
+# Install these non-PyPI dependencies separately before using this file:
+#   gcc/g++ 11
+#   CUDA Toolkit 12.9.1 (nvidia/cuda docker image already contains this)
+
+torch==2.11.0
+torchaudio==2.11.0
+torchvision==0.26.0
+opencv-python
+joblib
+plyfile
+tqdm
