@@ -17,3 +17,4 @@ dependencies:
     - torchvision==0.26.0 --index-url https://download.pytorch.org/whl/cu128
     - opencv-python
     - joblib
+    - gsplat
