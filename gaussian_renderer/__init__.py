@@ -63,7 +63,10 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     )
     # [1, H, W, 3] -> [3, H, W]
     rendered_image = render_colors[0].permute(2, 0, 1)
-    radii = info["radii"].squeeze(0) # [N,]
+    radii = info["radii"].squeeze(0)
+    visibility_filter = (radii > 0).all(dim=-1) if radii.ndim > 1 else radii > 0
+    if radii.ndim > 1:
+        radii = radii.amax(dim=-1)
     try:
         info["means2d"].retain_grad() # [1, N, 2]
     except:
@@ -73,5 +76,5 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # They will be excluded from value updates used in the splitting criteria.
     return {"render": rendered_image,
             "viewspace_points": info["means2d"],
-            "visibility_filter" : radii > 0,
+            "visibility_filter" : visibility_filter,
             "radii": radii}
