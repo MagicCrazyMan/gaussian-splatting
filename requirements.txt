@@ -16,5 +16,5 @@ opencv-python
 joblib
 plyfile
 tqdm
-gsplat
 packaging
+git+https://github.com/nerfstudio-project/gsplat.git
