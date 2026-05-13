@@ -20,6 +20,24 @@ except:
 
 C1 = 0.01 ** 2
 C2 = 0.03 ** 2
+FAST_SSIM_AVAILABLE = "fusedssim" in globals() and "fusedssim_backward" in globals()
+
+def _expand_mask(mask, target):
+    if mask is None:
+        return None
+
+    expanded_mask = mask.to(device=target.device, dtype=target.dtype)
+    while expanded_mask.ndim < target.ndim:
+        expanded_mask = expanded_mask.unsqueeze(0)
+
+    return expanded_mask.expand_as(target)
+
+def _masked_mean(value, mask=None):
+    if mask is None:
+        return value.mean()
+
+    expanded_mask = _expand_mask(mask, value)
+    return (value * expanded_mask).sum() / expanded_mask.sum().clamp_min(1e-8)
 
 class FusedSSIMMap(torch.autograd.Function):
     @staticmethod
@@ -37,11 +55,11 @@ class FusedSSIMMap(torch.autograd.Function):
         grad = fusedssim_backward(C1, C2, img1, img2, opt_grad)
         return None, None, grad, None
 
-def l1_loss(network_output, gt):
-    return torch.abs((network_output - gt)).mean()
+def l1_loss(network_output, gt, mask=None):
+    return _masked_mean(torch.abs(network_output - gt), mask)
 
-def l2_loss(network_output, gt):
-    return ((network_output - gt) ** 2).mean()
+def l2_loss(network_output, gt, mask=None):
+    return _masked_mean((network_output - gt) ** 2, mask)
 
 def gaussian(window_size, sigma):
     gauss = torch.Tensor([exp(-(x - window_size // 2) ** 2 / float(2 * sigma ** 2)) for x in range(window_size)])
@@ -53,7 +71,7 @@ def create_window(window_size, channel):
     window = Variable(_2D_window.expand(channel, 1, window_size, window_size).contiguous())
     return window
 
-def ssim(img1, img2, window_size=11, size_average=True):
+def ssim(img1, img2, window_size=11, size_average=True, mask=None):
     channel = img1.size(-3)
     window = create_window(window_size, channel)
 
@@ -61,9 +79,14 @@ def ssim(img1, img2, window_size=11, size_average=True):
         window = window.cuda(img1.get_device())
     window = window.type_as(img1)
 
-    return _ssim(img1, img2, window, window_size, channel, size_average)
+    if mask is not None:
+        expanded_mask = _expand_mask(mask, img1)
+        img1 = img1 * expanded_mask
+        img2 = img2 * expanded_mask
 
-def _ssim(img1, img2, window, window_size, channel, size_average=True):
+    return _ssim(img1, img2, window, window_size, channel, size_average, mask)
+
+def _ssim(img1, img2, window, window_size, channel, size_average=True, mask=None):
     mu1 = F.conv2d(img1, window, padding=window_size // 2, groups=channel)
     mu2 = F.conv2d(img2, window, padding=window_size // 2, groups=channel)
 
@@ -80,12 +103,23 @@ def _ssim(img1, img2, window, window_size, channel, size_average=True):
 
     ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
 
+    if mask is not None:
+        return _masked_mean(ssim_map, mask)
+
     if size_average:
         return ssim_map.mean()
     else:
         return ssim_map.mean(1).mean(1).mean(1)
 
 
-def fast_ssim(img1, img2):
+def fast_ssim(img1, img2, mask=None):
+    if not FAST_SSIM_AVAILABLE:
+        raise RuntimeError("Fast SSIM backend is unavailable.")
+
+    if mask is not None:
+        expanded_mask = _expand_mask(mask, img1)
+        img1 = img1 * expanded_mask
+        img2 = img2 * expanded_mask
+
     ssim_map = FusedSSIMMap.apply(C1, C2, img1, img2)
-    return ssim_map.mean()
+    return _masked_mean(ssim_map, mask)

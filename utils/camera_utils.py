@@ -9,6 +9,8 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
+import os
+
 from scene.cameras import Camera
 import numpy as np
 from utils.graphics_utils import fov2focal
@@ -19,6 +21,13 @@ WARNED = False
 
 def loadCam(args, id, cam_info, resolution_scale, is_nerf_synthetic, is_test_dataset):
     image = Image.open(cam_info.image_path)
+
+    # try find mask image
+    image_dirname, image_basename = os.path.split(cam_info.image_path)
+    mask_path = os.path.join(os.path.dirname(image_dirname), "masks", image_basename)
+    if os.path.exists(mask_path):
+        mask_image = Image.open(mask_path).convert("1")  # Convert to binary mask
+        image.putalpha(mask_image)  # Add the mask as an alpha channel
 
     if cam_info.depth_path != "":
         try:

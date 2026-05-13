@@ -12,7 +12,7 @@
 import os
 import torch
 from random import randint
-from utils.loss_utils import l1_loss, ssim
+from utils.loss_utils import FAST_SSIM_AVAILABLE, fast_ssim, l1_loss, ssim
 from gaussian_renderer import render, network_gui
 import sys
 from scene import Scene, GaussianModel
@@ -27,12 +27,6 @@ try:
     TENSORBOARD_FOUND = True
 except ImportError:
     TENSORBOARD_FOUND = False
-
-try:
-    from fused_ssim import fused_ssim
-    FUSED_SSIM_AVAILABLE = True
-except:
-    FUSED_SSIM_AVAILABLE = False
 
 try:
     from diff_gaussian_rasterization import SparseGaussianAdam
@@ -110,18 +104,19 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
         render_pkg = render(viewpoint_cam, gaussians, pipe, bg, use_trained_exp=dataset.train_test_exp, separate_sh=SPARSE_ADAM_AVAILABLE)
         image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
-
-        if viewpoint_cam.alpha_mask is not None:
-            alpha_mask = viewpoint_cam.alpha_mask.cuda()
-            image *= alpha_mask
+        alpha_mask = viewpoint_cam.alpha_mask.cuda() if viewpoint_cam.alpha_mask is not None else None
 
         # Loss
         gt_image = viewpoint_cam.original_image.cuda()
-        Ll1 = l1_loss(image, gt_image)
-        if FUSED_SSIM_AVAILABLE:
-            ssim_value = fused_ssim(image.unsqueeze(0), gt_image.unsqueeze(0))
+        Ll1 = l1_loss(image, gt_image, mask=alpha_mask)
+        if FAST_SSIM_AVAILABLE:
+            ssim_value = fast_ssim(
+                image.unsqueeze(0),
+                gt_image.unsqueeze(0),
+                mask=None if alpha_mask is None else alpha_mask.unsqueeze(0),
+            )
         else:
-            ssim_value = ssim(image, gt_image)
+            ssim_value = ssim(image, gt_image, mask=alpha_mask)
 
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim_value)
 
