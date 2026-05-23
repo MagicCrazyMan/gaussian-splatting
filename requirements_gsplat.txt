@@ -1,0 +1,3 @@
+# Instal this requirement file after installing requirements_pytorch.txt without --no-build-isolation
+
+git+https://github.com/nerfstudio-project/gsplat.git

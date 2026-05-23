@@ -1,6 +1,8 @@
 --index-url https://download.pytorch.org/whl/cu128
 --extra-index-url https://pypi.org/simple
 
+# Instal this requirement file before everything else
+
 # Recommended interpreter/tooling from environment.yml:
 #   Python ^3.11.9
 #   pip ^25.3
@@ -17,4 +19,3 @@ joblib
 plyfile
 tqdm
 packaging
-git+https://github.com/nerfstudio-project/gsplat.git

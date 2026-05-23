@@ -1,0 +1,7 @@
+# Instal this requirement file after installing requirements_pytorch.txt
+
+opencv-python
+joblib
+plyfile
+tqdm
+packaging
